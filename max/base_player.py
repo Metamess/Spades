@@ -5,11 +5,11 @@ class BasePlayer(IPlayer):
 
 	def __init__(self):
 		self.hand = []
-		self.seen = {}
-		self.full_deck = {}
+		self.seen = set()
+		self.full_deck = set()
 		for suit_id in range(4):
 			for number_id in range(13):
-				self.full_deck.add(card.Card(suit_id, number_id))
+				self.full_deck.add(Card(suit_id, number_id))
 
 	def unseen_cards(self):
 		return self.full_deck - self.seen
