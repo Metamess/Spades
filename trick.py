@@ -8,8 +8,8 @@ class Trick:
 		self.won_by_spade = False
 		self.suit = None
 
-	""""Add a newly played card to the trick"""
 	def add_card(self, card, player_id):
+		""""Add a newly played card to the trick."""
 		assert 4 > len(self.cards) == len(self.played_by)
 		if len(self.cards) == 0:
 			self.suit = card.suit
@@ -19,14 +19,14 @@ class Trick:
 		if card.suit == "S":
 			self.won_by_spade = True
 
-	"""Get the suit of this trick"""
 	def get_suit(self):
+		"""Get the suit of this trick."""
 		if len(self.cards) > 0:
 			return self.cards[0].suit
 		return None
 
-	""""Return the player id of the player currently winning trick"""
 	def get_winner(self):
+		""""Return the player id of the player currently winning trick."""
 		winning_card = None
 		for i, card in enumerate(self.cards):
 			if card > winning_card:

@@ -21,7 +21,7 @@ class GameManager:
 	def deal_deck(self):
 		"""
 		Shuffle the deck and deal 13 cards to each player.
-		Note that for Blind Nill purposes, the handing out of cards happens during the bidding phase
+		Note that for Blind Nill purposes, the handing out of cards happens during the bidding phase.
 		"""
 		deck = []
 		for suit_id in range(4):
@@ -35,7 +35,7 @@ class GameManager:
 		self.dealer = (self.dealer + 1) % 4
 
 	def get_bids(self):
-		""""Get the bids of all players in order"""
+		""""Get the bids of all players in order."""
 		self.bids = {}
 		blind_accepted = False
 		for i in range(4):
@@ -57,7 +57,7 @@ class GameManager:
 			player.announce_bids(self.bids.copy())
 
 	def handle_card_exchange(self):
-		""""Exchanges 2 cards between the players of the team running a Blind Nill"""
+		""""Exchanges 2 cards between the players of the team running a Blind Nill."""
 		assert _BLIND_NILL_CHARACTER in self.bids.values()
 		blinder_id = self.bids.keys()[self.bids.values().index(_BLIND_NILL_CHARACTER)]
 		# Step 1: Get 2 cards from the person running the Blind Nill and give them to the teammate
@@ -75,16 +75,16 @@ class GameManager:
 			self.hands[receiver_id] += offered_cards
 
 	def get_trick(self, starting_player, spades_broken):
-		""""Play a trick by getting a card from each player in order"""
+		""""Play a trick by getting a card from each player in order."""
 		current_trick = Trick()
 		for i in range(4):
 			player_id = (starting_player + i) % 4
-			card_played = self.players[player_id].play_card(deepcopy(current_trick))
+			card_played = self.players[player_id].play_card(deepcopy(current_trick), self.get_valid_cards(player_id, current_trick, spades_broken))
 			assert self.verify_card_validity(card_played, player_id, current_trick, spades_broken)
 		return current_trick
 
 	def verify_card_validity(self, played_card, player_id, trick, spades_broken):
-		""""Verify that an offered card is valid to play"""
+		""""Verify that an offered card is valid to play."""
 		try:
 			# First off, a card can only be played if the player actually has it
 			assert played_card in self.hands[player_id]
@@ -102,8 +102,16 @@ class GameManager:
 			return False
 		return True
 
+	def get_valid_cards(self, player_id, trick, spades_broken):
+		""""Generate a list of all cards in a player's hand that are valid to play for this trick."""
+		valid_cards = []
+		for hand_card in self.hands[player_id]:
+			if self.verify_card_validity(hand_card, player_id, trick, spades_broken):
+				valid_cards.append(hand_card)
+		return deepcopy(valid_cards)
+
 	def play_round(self):
-		""""Play a round, consisting of 13 tricks"""
+		""""Play a round, consisting of 13 tricks."""
 		# Set up the round
 		spades_broken = False
 		self.deal_deck()
@@ -130,7 +138,7 @@ class GameManager:
 			player.announce_score(self.score.copy())
 
 	def award_scores(self, trick_count, team_id):
-		""""Given the bids and a resulting trick count, decide the score for a team"""
+		""""Given the bids and a resulting trick count, decide the score for a team."""
 		gained_score = 0
 		handled = False
 
@@ -178,6 +186,7 @@ class GameManager:
 		self.score[team_id] += gained_score
 
 	def play_game(self):
+		"""""Simulate one game of Spades with the given players."""
 		assert len(self.players) == 4
 		self.score = {0: 0, 1: 0}
 		self.score = 0
