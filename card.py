@@ -15,13 +15,17 @@ class Card:
 		self.number = numbers[number_id]
 
 	def __eq__(self, other):
-		if self.suit == other.suit:
-			return self.number == other.number
+		if other is None:
+			return False
+		if self.suit_id == other.suit_id:
+			return self.number_id == other.number_id
 		return False
 
 	def __gt__(self, other):
-		if self.suit == other.suit:
-			return self.number_id > other.numberId
+		if other is None:
+			return True
+		if self.suit_id == other.suit_id:
+			return self.number_id > other.number_id
 
 		if self.suit_id == 0:
 			return True

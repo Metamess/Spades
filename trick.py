@@ -31,6 +31,7 @@ class Trick:
 		for i, card in enumerate(self.cards):
 			if card > winning_card:
 				winning_card = card
+		assert len(self.cards) == 0 or winning_card is not None
 		if winning_card is None:
 			return None
 		return self.played_by[self.cards.index(winning_card)]

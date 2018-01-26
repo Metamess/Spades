@@ -43,7 +43,7 @@ class GameManager:
 			# Hence, it's current value is the player who should start bidding
 			active_player_id = (self.dealer + i) % 4
 			# First, we have to check if a Blind Nill bid is allowed, and if so, offer the option
-			if not blind_accepted and self.score[active_player_id % 2] <= self.score[active_player_id + 1 % 2] - 100:
+			if not blind_accepted and self.score[active_player_id % 2] <= self.score[(active_player_id + 1) % 2] - 100:
 				if self.players[active_player_id].offer_blind_nill(self.bids.copy()):
 					blind_accepted = True
 					self.bids[active_player_id] = _BLIND_NILL_CHARACTER
@@ -81,6 +81,7 @@ class GameManager:
 			player_id = (starting_player + i) % 4
 			card_played = self.players[player_id].play_card(deepcopy(current_trick), self.get_valid_cards(player_id, current_trick, spades_broken))
 			assert self.verify_card_validity(card_played, player_id, current_trick, spades_broken)
+			current_trick.add_card(card_played, player_id)
 		return current_trick
 
 	def verify_card_validity(self, played_card, player_id, trick, spades_broken):
@@ -189,10 +190,11 @@ class GameManager:
 		"""""Simulate one game of Spades with the given players."""
 		assert len(self.players) == 4
 		self.score = {0: 0, 1: 0}
-		self.score = 0
+		self.dealer = 0
 		# Tell the player's about their id's
 		for i in range(4):
 			self.players[i].announce_ids(i, (i+2)%4, i%2)
 		# Play rounds until one side wins
-		while self.score[0] < self.playing_to and self.score[1] < 500:
+		while -self.playing_to < self.score[0] < self.playing_to and -self.playing_to < self.score[1] < self.playing_to:
 			self.play_round()
+		return self.score
