@@ -9,10 +9,10 @@ class RelativeData:
 		self.data_size = 4
 
 	def relative_to_global(self, player_id):
-		return (player_id - self.reference_id) % self.data_size
+		return (player_id + self.reference_id) % self.data_size
 
 	def global_to_relative(self, player_id):
-		return (player_id + self.reference_id) % self.data_size
+		return (player_id - self.reference_id) % self.data_size
 
 	def make_copy(self, reference_id=None):
 		copy = deepcopy(self)
