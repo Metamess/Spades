@@ -8,10 +8,10 @@ class RelativeData:
 		self.data = {}
 		self.data_size = 4
 
-	def relative_to_global(self, player_id):
+	def globalize_id(self, player_id):
 		return (player_id + self.reference_id) % self.data_size
 
-	def global_to_relative(self, player_id):
+	def localize_id(self, player_id):
 		return (player_id - self.reference_id) % self.data_size
 
 	def make_copy(self, reference_id=None):
@@ -25,7 +25,7 @@ class RelativeData:
 			raise ValueError("Expected int, got " + str(type(i)))
 		if i >= self.data_size or i < 0:
 			raise KeyError("Key must be in range 0 to " + str(self.data_size-1))
-		global_id = self.relative_to_global(i)
+		global_id = self.globalize_id(i)
 		return self.data[global_id]
 
 	def __contains__(self, i):
@@ -33,7 +33,7 @@ class RelativeData:
 			raise ValueError("Expected int, got " + str(type(i)))
 		if i >= self.data_size or i < 0:
 			return False
-		global_id = self.relative_to_global(i)
+		global_id = self.globalize_id(i)
 		return global_id in self.data
 
 	def __len__(self):

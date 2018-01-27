@@ -9,7 +9,7 @@ class Bids(RelativeData):
 
 	def add_bid(self, bid, player_id):
 		""""Add a new bid."""
-		global_id = self.relative_to_global(player_id)
+		global_id = self.globalize_id(player_id)
 		assert len(self.bids) < self.data_size and global_id not in self.bids
 		if bid == 0:
 			bid = "N"
@@ -27,7 +27,7 @@ class Bids(RelativeData):
 	def get_blinder_id(self):
 		for player_id in self.bids:
 			if self.bids[player_id] == "B":
-				return self.global_to_relative(player_id)
+				return self.localize_id(player_id)
 		return None
 
 	def get_team_bid(self, team_id):
@@ -56,8 +56,8 @@ class Bids(RelativeData):
 		str_bids = {i: '?' for i in range(4)}
 		for i in range(4):
 			if i in self.bids:
-				relative_id = self.global_to_relative(i)
-				str_bids[relative_id] = str(self.bids[i])
+				local_id = self.localize_id(i)
+				str_bids[local_id] = str(self.bids[i])
 		return "Bids: team 0: " + str_bids[0] + " + " + str_bids[2] + " team 1: " + str_bids[1] + " + " + str_bids[3]
 
 
