@@ -4,6 +4,7 @@ from copy import deepcopy
 from i_player import IPlayer
 from trick import Trick
 from bids import Bids
+from score import Score
 
 
 _BLIND_NILL_CHARACTER = "B"
@@ -14,7 +15,7 @@ class GameManager:
 	def __init__(self, players=[IPlayer()]*4, playing_to=500):
 		self.players = players
 		self.playing_to = playing_to
-		self.score = {0: 0, 1: 0}  # Players 0 and 2 form team 0, players 1 and 3 are team 1
+		self.score = Score()  # Players 0 and 2 form team 0, players 1 and 3 are team 1
 		self.hands = {}
 		self.dealer = 0
 		self.bids = Bids()
@@ -44,7 +45,7 @@ class GameManager:
 			# Hence, it's current value is the player who should start bidding
 			active_player_id = (self.dealer + i) % 4
 			# First, we have to check if a Blind Nill bid is allowed, and if so, offer the option
-			if not blind_accepted and self.score[active_player_id % 2] <= self.score[(active_player_id + 1) % 2] - 100:
+			if not blind_accepted and self.score.can_blind(active_player_id):
 				if self.players[active_player_id].offer_blind_nill(self.bids.make_copy(active_player_id)):
 					blind_accepted = True
 					self.bids.add_bid(_BLIND_NILL_CHARACTER, active_player_id)
@@ -137,8 +138,8 @@ class GameManager:
 		for i in [0, 1]:
 			self.award_scores(trick_count, i)
 		# Inform all players about the new score
-		for player in self.players:
-			player.announce_score(self.score.copy())
+		for i, player in enumerate(self.players):
+			player.announce_score(self.score.make_copy(i))
 
 	def award_scores(self, trick_count, team_id):
 		""""Given the bids and a resulting trick count, decide the score for a team."""
@@ -186,16 +187,16 @@ class GameManager:
 		if (self.score[team_id] % 10) + (gained_score % 10) >= 10:
 			gained_score -= 100
 
-		self.score[team_id] += gained_score
+		self.score.add_score(gained_score, team_id)
 
 	def play_game(self):
 		"""""Simulate one game of Spades with the given players."""
 		assert len(self.players) == 4
-		self.score = {0: 0, 1: 0}
+		self.score = Score()
 		self.dealer = 0
-		# Tell the player's about their id's
+		# Give the players the starting score
 		for i in range(4):
-			self.players[i].announce_ids(i, (i+2) % 4, i % 2)
+			self.players[i].announce_score(self.score.make_copy(i))
 		# Play rounds until one side wins
 		while -self.playing_to < self.score[0] < self.playing_to and -self.playing_to < self.score[1] < self.playing_to:
 			self.play_round()

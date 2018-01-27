@@ -81,14 +81,3 @@ class IPlayer:
 		score: a dict containing the scores of each team (keys 0 and 1).
 		"""
 		pass
-
-	def announce_ids(self, player_id, teammate_id, team_id):
-		""""
-		Tell the player his id, his teammate's id, and the team id.
-		These values are provided purely to assist in using the information provided by other functions.
-
-		player_id: An integer with  value 0-3.
-		teammate_id: An integer with value 0-3 (equal to (player_id + 2 % 4)).
-		team_id: An integer with value 0 or 1.
-		"""
-		pass
