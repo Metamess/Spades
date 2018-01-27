@@ -82,6 +82,7 @@ class GameManager:
 			card_played = self.players[player_id].play_card(deepcopy(current_trick), self.get_valid_cards(player_id, current_trick, spades_broken))
 			assert self.verify_card_validity(card_played, player_id, current_trick, spades_broken)
 			current_trick.add_card(card_played, player_id)
+			self.hands[player_id].remove(card_played)
 		return current_trick
 
 	def verify_card_validity(self, played_card, player_id, trick, spades_broken):
@@ -193,7 +194,7 @@ class GameManager:
 		self.dealer = 0
 		# Tell the player's about their id's
 		for i in range(4):
-			self.players[i].announce_ids(i, (i+2)%4, i%2)
+			self.players[i].announce_ids(i, (i+2) % 4, i % 2)
 		# Play rounds until one side wins
 		while -self.playing_to < self.score[0] < self.playing_to and -self.playing_to < self.score[1] < self.playing_to:
 			self.play_round()

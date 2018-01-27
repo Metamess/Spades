@@ -1,3 +1,4 @@
+suit_names = {"S": "Spades", "H": "Hearts", "C": "Clubs", "D": "Diamonds", None: "Empty"}
 
 
 class Trick:
@@ -35,3 +36,12 @@ class Trick:
 		if winning_card is None:
 			return None
 		return self.played_by[self.cards.index(winning_card)]
+
+	def __str__(self):
+		t = {i: "??" for i in range(4)}
+		for i in range(len(self.cards)):
+			t[self.played_by[i]] = self.cards[i]
+		card_str = ", ".join([str(i) + ": " + str(t[i]) for i in range(4)])
+		return suit_names[self.suit] + " Trick: " + card_str + " (Winner: " + str(self.get_winner()) + ")"
+
+
