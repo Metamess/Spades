@@ -55,8 +55,9 @@ class Bids(RelativeData):
 	def __str__(self):
 		str_bids = {i: '?' for i in range(4)}
 		for i in range(4):
-			relative_id = self.global_to_relative(i)
-			str_bids[relative_id] = str(self.bids[i])
+			if i in self.bids:
+				relative_id = self.global_to_relative(i)
+				str_bids[relative_id] = str(self.bids[i])
 		return "Bids: team 0: " + str_bids[0] + " + " + str_bids[2] + " team 1: " + str_bids[1] + " + " + str_bids[3]
 
 

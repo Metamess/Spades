@@ -42,8 +42,8 @@ class Trick(RelativeData):
 	def __str__(self):
 		t = {i: "??" for i in range(4)}
 		for i in range(4):
-			relative_id = self.global_to_relative(i)
 			if i in self.cards:
+				relative_id = self.global_to_relative(i)
 				t[relative_id] = self.cards[i]
 		# card_str = ", ".join([str(i) + ": " + str(t[i]) for i in range(4)])
 		card_str = ", ".join([str(t[i]) for i in range(4)])
