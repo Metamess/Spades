@@ -1,7 +1,6 @@
-# This Python file uses the following encoding: utf-8
 import functools
 
-# suit_symbols = ["♠", "♥", "♦", "♣"]
+suit_symbols = ["♠", "♥", "♦", "♣"]
 suits = ["S", "H", "D", "C"]
 numbers = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 
@@ -33,8 +32,7 @@ class Card:
 		return False
 
 	def __str__(self):
-		# return suit_symbols[suits.index(self.suit)] + self.number
-		return self.suit + self.number
+		return suit_symbols[suits.index(self.suit)] + self.number
 
 	def __int__(self):
 		return self.suit_id * 13 + self.number_id
