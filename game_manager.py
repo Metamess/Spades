@@ -53,7 +53,13 @@ class GameManager:
 					continue
 			# Hand out the cards to the player and ask for a bid
 			self.players[active_player_id].give_hand(deepcopy(self.hands[active_player_id]))
-			self.bids.add_bid(self.players[active_player_id].make_bid(self.bids.make_copy(active_player_id)), active_player_id)
+			player_bid = self.players[active_player_id].make_bid(self.bids.make_copy(active_player_id))
+			# Make sure the bid is valid: between 0 and 13, and the sum with the teammate's bid does not exceed 13
+			assert 0 <= player_bid <= 13
+			teammate_id = (active_player_id + 2) % 4
+			if teammate_id in self.bids and self.bids[teammate_id] != "N":
+				assert self.bids[(active_player_id + 2) % 4] + player_bid <= 13
+			self.bids.add_bid(player_bid, active_player_id)
 		# When all bids have been made, inform all players about them
 		for i, player in enumerate(self.players):
 			player.announce_bids(self.bids.make_copy(i))
