@@ -1,6 +1,5 @@
 from i_player import IPlayer
-
-suit_names = {"S": "Spades", "H": "Hearts", "C": "Clubs", "D": "Diamonds"}
+from card_set import CardSet
 
 
 class HumanPlayer(IPlayer):
@@ -20,54 +19,26 @@ class HumanPlayer(IPlayer):
 
 		cards: a list of 13 Card objects.
 		"""
-		self.hand = HumanPlayer.order_cards(cards)
+		self.hand = CardSet(cards)
 		print("You have received the following hand:")
-		HumanPlayer.print_cards(self.hand)
+		print(self.hand)
 		print()
 
-	@staticmethod
-	def order_cards(cards):
-		res = {"S": [], "H": [], "C": [], "D": []}
-		for current_card in cards:
-			res[current_card.suit].append(current_card)
-		for suit in res:
-			res[suit] = sorted(res[suit], key=lambda x: int(x))
-		return res
-
-	@staticmethod
-	def hand_to_list(hand):
-		res = []
-		for suit_key in hand:
-			res += hand[suit_key]
-		return res
-
-	@staticmethod
-	def print_cards(cards, show_ids=False):
-		for suit in cards:
-			print(suit_names[suit] + ':', ", ".join([HumanPlayer.card_to_string(card, show_ids) for card in cards[suit]]))
-
-	@staticmethod
-	def card_to_string(card, show_id=False):
-		if show_id:
-			return str(card) + " (" + str(int(card)) + ")"
-		return str(card)
-
-	@staticmethod
-	def print_bids(bids, final=False):
-		assert not final or len(bids) == 4
+	def print_bids(self, final=False):
+		assert not final or len(self.bids) == 4
 		for i in range(4):
-			if i not in bids:
-				bids.add_bid('?', i)
+			if i not in self.bids:
+				self.bids.add_bid('?', i)
 		team0_sum = ""
 		team1_sum = ""
 		if final:
 			print("The bids for this round:")
-			team0_sum = " = " + "+".join([str(bid) for bid in bids.get_team_bid(0)])
-			team1_sum = " = " + "+".join([str(bid) for bid in bids.get_team_bid(1)])
+			team0_sum = " = " + "+".join([str(bid) for bid in self.bids.get_team_bid(0)])
+			team1_sum = " = " + "+".join([str(bid) for bid in self.bids.get_team_bid(1)])
 		else:
 			print("Bids so far:")
-		print("\tteam 0: " + str(bids[0]) + " + " + str(bids[2]) + team0_sum)
-		print("\tteam 1: " + str(bids[1]) + " + " + str(bids[3]) + team1_sum)
+		print("\tteam 0: " + str(self.bids[0]) + " + " + str(self.bids[2]) + team0_sum)
+		print("\tteam 1: " + str(self.bids[1]) + " + " + str(self.bids[3]) + team1_sum)
 
 	def make_bid(self, bids):
 		""""
@@ -83,8 +54,13 @@ class HumanPlayer(IPlayer):
 			teammate_bid = bids[self.teammate_id]
 		max_bid = 13 - teammate_bid
 
+		# Make sure to reset the trick counter
+		self.trick_count = {i: 0 for i in range(4)}
+
+		self.bids = bids
 		print("Please make a bid for this round")
-		HumanPlayer.print_bids(bids)
+		self.print_bids()
+		print(bids)
 
 		answer = -1
 		while not (0 <= answer <= max_bid):
@@ -107,7 +83,7 @@ class HumanPlayer(IPlayer):
 		print("It's your turn to play a card!")
 		print("The trick so far:", str(trick))
 		print("Your hand:")
-		HumanPlayer.print_cards(self.hand, True)
+		print(self.hand.to_string(True))
 		valid_ids = [int(card) for card in valid_cards]
 		chosen_card_nr = ""
 		while chosen_card_nr not in valid_ids:
@@ -126,7 +102,7 @@ class HumanPlayer(IPlayer):
 			if int(card) == chosen_card_nr:
 				chosen_card = card
 				break
-		self.hand[chosen_card.suit].remove(chosen_card)
+		self.hand.remove(chosen_card)
 		print("You have played " + str(chosen_card))
 		print()
 		return chosen_card
@@ -151,7 +127,9 @@ class HumanPlayer(IPlayer):
 
 		cards: a list of 2 Card objects.
 		"""
-		print("Your teammate has given you the following cards:", HumanPlayer.card_to_string(cards[0]), HumanPlayer.card_to_string(cards[1]))
+		for card in cards:
+			self.hand.append(card)
+		print("Your teammate has given you the following cards:", cards[0], cards[1])
 		print()
 
 	def request_blind_nill_cards(self):
@@ -162,9 +140,8 @@ class HumanPlayer(IPlayer):
 		"""
 		print("Please select 2 cards to give to your teammate")
 		print("Your hand:")
-		HumanPlayer.print_cards(self.hand, True)
-		hand_cards = HumanPlayer.hand_to_list(self.hand)
-		hand_card_ids = [int(card) for card in hand_cards]
+		print(self.hand.to_string(True))
+		hand_card_ids = [int(card) for card in self.hand]
 		chosen_card_numbers = []
 		chosen_card_nr = ""
 		ordinals = ["first", "second"]
@@ -193,10 +170,10 @@ class HumanPlayer(IPlayer):
 
 		chosen_cards = []
 		for chosen_card_nr in chosen_card_numbers:
-			for card in hand_cards:
+			for card in self.hand:
 				if int(card) == chosen_card_nr:
 					chosen_cards.append(card)
-					self.hand[card.suit].remove(card)
+					self.hand.remove(card)
 					break
 		print("You have given your teammate", str(chosen_cards[0]), "and", str(chosen_cards[1]))
 		print()
@@ -208,8 +185,8 @@ class HumanPlayer(IPlayer):
 
 		bids: a dict containing all bids, with keys 0-3 (player_id) and values 0-13 or "B" for Blind Nill.
 		"""
-		HumanPlayer.print_bids(bids, True)
 		self.bids = bids
+		self.print_bids(final=True)
 		print()
 
 	def announce_trick(self, trick):

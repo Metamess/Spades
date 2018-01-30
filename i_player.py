@@ -3,7 +3,7 @@
 class IPlayer:
 
 	def __init__(self):
-		self.hand = []
+		self.hand = None
 
 	def give_hand(self, cards):
 		"""

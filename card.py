@@ -2,6 +2,7 @@ import functools
 
 suit_symbols = ["♠", "♥", "♣", "♦"]
 suits = ["S", "H", "C", "D"]
+suit_names = {"S": "Spades", "H": "Hearts", "C": "Clubs", "D": "Diamonds"}
 numbers = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 
 
