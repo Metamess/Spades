@@ -57,7 +57,7 @@ class GameManager:
 			# Make sure the bid is valid: between 0 and 13, and the sum with the teammate's bid does not exceed 13
 			assert 0 <= player_bid <= 13
 			teammate_id = (active_player_id + 2) % 4
-			if teammate_id in self.bids and self.bids[teammate_id] != "N":
+			if teammate_id in self.bids and (self.bids[teammate_id] != "N" and self.bids[teammate_id] != "B"):
 				assert self.bids[(active_player_id + 2) % 4] + player_bid <= 13
 			self.bids.add_bid(player_bid, active_player_id)
 		# When all bids have been made, inform all players about them

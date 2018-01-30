@@ -36,8 +36,7 @@ class Bids(RelativeData):
 		return: A list with a single entry if both players made a normal bid, or the separate bids if either player has bid a (Blind) Nill.
 				List will contain '?' if a player has not yet made a bid.
 		"""
-		global_team_id = (team_id + self.reference_id) % 2
-		player_ids = [global_team_id, global_team_id + 2]
+		player_ids = [(self.reference_id + team_id) % 4, (self.reference_id + team_id + 2) % 4]
 		res = []
 		summable = True
 		for player_id in player_ids:
