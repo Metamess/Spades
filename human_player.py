@@ -19,6 +19,8 @@ class HumanPlayer(IPlayer):
 
 		cards: a list of 13 Card objects.
 		"""
+		# Make sure to reset the trick counter
+		self.trick_count = {i: 0 for i in range(4)}
 		self.hand = CardSet(cards)
 		print("You have received the following hand:")
 		print(self.hand)
@@ -53,9 +55,6 @@ class HumanPlayer(IPlayer):
 		if self.teammate_id in bids:
 			teammate_bid = bids[self.teammate_id]
 		max_bid = 13 - teammate_bid
-
-		# Make sure to reset the trick counter
-		self.trick_count = {i: 0 for i in range(4)}
 
 		self.bids = bids
 		print("Please make a bid for this round")
