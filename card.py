@@ -27,10 +27,10 @@ class Card:
 		if self.suit_id == other.suit_id:
 			return self.number_id > other.number_id
 
-		if self.suit_id == 0:
-			return True
+		if other.suit_id == 0:
+			return False
 
-		return False
+		return True
 
 	def __str__(self):
 		return suit_symbols[suits.index(self.suit)] + self.number
