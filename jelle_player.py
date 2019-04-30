@@ -6,7 +6,7 @@ class JellePlayer(IPlayer):
     def __init__(self):
         self.hand=[]
         self.score=[0,0]
-        self.update=True
+        self.update=False       #staat nu uit, vergeet niet ook announce score weer aan te zetten later
         self.bids=[]
 
 
@@ -14,12 +14,17 @@ class JellePlayer(IPlayer):
         self.hand=cards
         self.trick_score=[0,0,0,0]
 
-        self.handlist=[0 for i in range(0,52)]
+        self.handlist=[0 for i in range(0,52)]          #list containing all the cards in the player's hand, not currently in use
         for i in range(0,len(self.hand)):
             self.handlist[self.hand[i].__int__()]=1
 
     def announce_bids(self, bids):
-        self.bids=bids
+        self.bids=[0,0,0,0]
+
+        for i in (0,1,2,3):
+            self.bids[i]=bids[i]
+            if bids[i] == "N":
+                self.bids[i]=0
 
 
 
@@ -51,7 +56,7 @@ class JellePlayer(IPlayer):
             number_id = self.hand[cards_in_hand].__int__() % 13
             total_value+=value_matrix[suit_id][number_id]
 
-        print(total_value)
+
         team_bid=bids.get_team_bid(0)[1]
         maximum_allowed_bid=13
         try:
@@ -61,48 +66,113 @@ class JellePlayer(IPlayer):
             pass
         total_value=min(maximum_allowed_bid,max(1,total_value))
 
-
+        #print(total_value)
+        if total_value<2:
+            return 0
         return round(total_value)                                   #return the rounded estimate of the value of the hand
 
     def play_card(self, trick, valid_cards):
 
-        #If the AI's companion is winning, then he will try to save his good cards by playing a card he wants to get rid of.
-        #If the Ai is last to act and his companion is not winning, then the AI will try to play his worst winning card. If winning is not possible, then the ai will play a card he wants to get rid of.
-        #If the AI is opening the trick, then he plays a random card
-        #If the AI is not opening, nor last to play, and an opponent is winning and the AI holds cards that could win the trick, then he plays his best card of the trick suit, or a low trump. If the AI can't win, he gets rid of a card.
+        strategy = self.determine_strategy(trick,valid_cards)
 
-        print(trick)
-        print(valid_cards)
+        #print(trick)
+        #print(valid_cards)
+        #print("strategy:" + str(strategy))
 
-        if trick.get_winner()==2 : #if team player seems to be winning the hand: play the lowest non-trick card available
+        if strategy == "get rid of a good card" : #player is playing null and wants to get rid of good cards.
+            if self.find_highest_losing_card_in_reaction(trick,valid_cards)!= None:
+                return self.find_highest_losing_card_in_reaction(trick,valid_cards)
+            return valid_cards.pop()
 
+        if strategy == "get rid of a bad card" : #if team player seems to be winning the hand: play the lowest non-trick card available
             return self.find_card_to_get_rid_of(valid_cards)
 
+        if strategy == "high opening":
+            return self.find_high_card_to_open_with(trick,valid_cards)
+
+        if strategy == "low opening":
+            return self.find_low_card_to_open_with(trick,valid_cards)
 
 
-        else:                                   #if an opposing player currently leads
+        if strategy == "pop":
+            return valid_cards.pop()
 
-            if len(trick)!=3 :      #if not all other players have played a card
-                winnerid = trick.get_winner()
-                if winnerid in (1, 3):      #an opponent is winning
-                    if self.find_highest_winning_card_in_reaction(trick,valid_cards,winnerid)!= None: #If the AI has winning cards
-                        if self.find_low_winning_trump_card(trick,valid_cards)!=None:   #The AI is allowed to play a trump card
-                            return self.find_low_winning_trump_card(trick,valid_cards)
-                        else:
-                            return self.find_highest_winning_card_in_reaction(trick,valid_cards,winnerid)
-                    else:       #if the player can't win, get rid of a useless card
-                        return self.find_card_to_get_rid_of(valid_cards)
-                else:                       #I am opening
-                    self.determine_opening_strategy()
-                    return valid_cards.pop()
+        if strategy=="play a strong winning card":
+            return self.find_highest_winning_card_in_reaction(trick,valid_cards)
 
-            else:       #so player is last to act
-                if self.find_lowest_winning_card(trick,valid_cards) != None:
-                    return self.find_lowest_winning_card(trick,valid_cards)
-                else:
-                    return self.find_card_to_get_rid_of(valid_cards)
+        if strategy=="play the lowest winning card":
+            return self.find_lowest_winning_card(trick,valid_cards)
 
 
+
+
+    def determine_strategy(self,trick,valid_cards):
+
+        #check the game state, objectives and so on to determine what to do
+
+        wants_to_win_more_tricks=True
+        if self.bids[0] == 0 and self.trick_score[0] == 0:
+            wants_to_win_more_tricks = False
+        elif ((self.bids[0]+self.bids[2])<=(self.trick_score[0]+self.trick_score[2])) and ((self.bids[1]+self.bids[3])<=(self.trick_score[1]+self.trick_score[3])):
+            #if the players team has enough tricks and the opponent has enough too, then attempt to lose
+            wants_to_win_more_tricks = False
+
+        #determine whether player can potentially win the trick
+        able_to_win_trick=False
+        opening=False
+        if len(trick)==0:
+            able_to_win_trick=True
+            opening=True
+        else:
+            winner_id=trick.get_winner()
+            for playable_cards in valid_cards:
+                if playable_cards.__gt__(trick[winner_id]):
+                    able_to_win_trick=True
+
+
+        if len(trick)==3:
+            last_to_act=True
+        else:
+            last_to_act = False
+
+        #detirmine whether the player can be guaranteed to lose the trick
+        guaranteed_to_lose_trick = False
+        if len(trick)!=0:
+            winner_id=trick.get_winner()
+            for playable_cards in valid_cards:
+                if trick[winner_id].__gt__(playable_cards):
+                    guaranteed_to_lose_trick=True
+
+        #print("wants to win more tricks: "+str(wants_to_win_more_tricks))
+        #transform the observed game state into a strategy to play
+        if opening and wants_to_win_more_tricks:
+            return "high opening"
+        if opening and not wants_to_win_more_tricks:
+            return "low opening"
+
+        if wants_to_win_more_tricks == False and guaranteed_to_lose_trick and not opening:
+            return "get rid of a good card"
+
+        if trick.get_winner()==2 and wants_to_win_more_tricks: #if team player seems to be winning the hand: play the lowest non-trick card available
+            return "get rid of a bad card"
+
+        if trick.get_winner()==2 and not wants_to_win_more_tricks: #if team player seems to be winning the hand: play the lowest non-trick card available
+            return "get rid of a good card"
+
+        if not opening and wants_to_win_more_tricks and able_to_win_trick and not last_to_act:
+            return "play a strong winning card"
+
+        if wants_to_win_more_tricks and last_to_act and able_to_win_trick:
+            return "play the lowest winning card"
+
+        if wants_to_win_more_tricks and not able_to_win_trick:
+            return "get rid of a bad card"
+
+        if not guaranteed_to_lose_trick and not wants_to_win_more_tricks and not opening:
+            return "play the lowest winning card"
+
+        print("no strat found")
+        return "pop"
 
 
     def offer_blind_nill(self, bids):
@@ -121,10 +191,10 @@ class JellePlayer(IPlayer):
             if self.score[0] %10 != score[0] % 10:
                 self.adjust_bet_value_upwards()
         self.score=score
-        self.update=True
+        self.update=False
 
     def announce_trick(self, trick):
-        print(trick)
+        #print(trick)
         self.trick_score[trick.get_winner()]+=1
 
     def request_blind_nill_cards(self):
@@ -194,11 +264,10 @@ class JellePlayer(IPlayer):
 
         ai_file.close()
 
-    def determine_opening_strategy(self):
-        return 1
 
-    def find_highest_winning_card_in_reaction(self,trick,valid_cards, winnerid):
 
+    def find_highest_winning_card_in_reaction(self,trick,valid_cards):
+            winnerid=trick.get_winner()
             best_card = trick[winnerid]
             for i in range(0, len(valid_cards)):
                 if valid_cards[i].__gt__(best_card):
@@ -227,7 +296,67 @@ class JellePlayer(IPlayer):
         else:
             return None
 
+    def find_highest_losing_card_in_reaction(self,trick, valid_cards):
+        #returns None if there are no losing cards in valid-cards. Returns the highest card if all valid losing cards are of one suit. If there are more suits available in
+        #the losing cards, then the AI will try to empty a suit.
+
+        winning_player=trick.get_winner()
+        winning_card_in_trick=trick[winning_player]
+
+        losing_cards_in_hand=[]
+        for i in range(0,len(valid_cards)):
+            if winning_card_in_trick.__gt__(valid_cards[i]):
+                losing_cards_in_hand.append(valid_cards[i])
+
+
+        if len(losing_cards_in_hand)== 0:
+
+            return None
+        else:
+            losing_cards_in_hand_cardset = CardSet(losing_cards_in_hand)
+            for i in ("S","H","C","D"):
+                if losing_cards_in_hand_cardset.get_suit_size(i)==len(losing_cards_in_hand): #there is only a single suit to choose from. Play the highest card of that suit.
+
+                    highest_losing_card = losing_cards_in_hand[0]
+                    for j in range(0,losing_cards_in_hand_cardset.get_suit_size(i)):
+                        if losing_cards_in_hand[j].__gt__(highest_losing_card):
+                            highest_losing_card=losing_cards_in_hand[j]
+
+                    return highest_losing_card
+
+                if losing_cards_in_hand_cardset.get_suit_size(i) == 1:
+                    if losing_cards_in_hand_cardset.get_suit_cards(i)[
+                        0].__int__() % 13 > 8:  # there is but a single high card of a suit, play it.
+
+                        return losing_cards_in_hand_cardset.get_suit_cards(i)[0]
+
+            if losing_cards_in_hand_cardset.get_suit_size("S") > 0:  # there is the option to get rid of a spades. The player chooses the highest spades available
+                best_card_to_play = losing_cards_in_hand_cardset[0]
+                for i in range(0,len(losing_cards_in_hand_cardset)):
+                    if losing_cards_in_hand_cardset[i].__gt__(best_card_to_play):
+                        best_card_to_play=losing_cards_in_hand_cardset[i]
+                #print("spades available")
+                return best_card_to_play
+
+            #play the highest card
+            best_card_to_play=losing_cards_in_hand_cardset[0]
+            for i in range(0,len(losing_cards_in_hand_cardset)):
+                if losing_cards_in_hand_cardset[i].__int__()%13 > best_card_to_play.__int__()%13:
+                    best_card_to_play=losing_cards_in_hand_cardset[i]
+            #print("high card")
+            return best_card_to_play
+
+
+
+
+
+
+
+
+
+
     def find_low_non_trick_card(self,valid_cards):
+
 
         lowest_card = valid_cards[0]
         for i in range(1, len(valid_cards)):
@@ -239,7 +368,7 @@ class JellePlayer(IPlayer):
                 lowest_card = valid_cards[i]
             if valid_cards[i].__int__() % 13 == 0 and lowest_card.__int__() % 13 == 0:  # and lastly, if both are trick cards, then choose the lowest of the two
                 if valid_cards[i].__int__() < lowest_card.__int__():
-                    print("check?")
+                    #print("check?")
                     lowest_card = valid_cards[i]
         return lowest_card
 
@@ -273,20 +402,24 @@ class JellePlayer(IPlayer):
 
         return None
 
-    def find_highest_losing_card(self):
-        pass
+
 
     def find_card_to_pull_out_trump_cards(self):
         pass
 
-    def find_high_card_to_open_with(self):
-        pass
+    def find_high_card_to_open_with(self,trick,valid_cards):
+        best_card=valid_cards[0]
+        for i in range(0,len(valid_cards)):
+            if valid_cards[i].__int__()%13>best_card.__int__()%13:
+                best_card=valid_cards[i]
+        return best_card
 
-    def find_card_to_lose_suit(self):
-        pass
-
-    def find_low_card_to_open_with(self):
-        pass
+    def find_low_card_to_open_with(self,trick,valid_cards):
+        best_card=valid_cards[0]
+        for i in valid_cards:
+            if (i.__int__()%13)<(best_card.__int__()%13):
+                best_card=i
+        return best_card
 
     def find_card_to_get_rid_of(self,valid_cards):
         #Sometimes you can't win. That is an opportunity to get rid of an unwanted card. The AI will play the lowest card if he has only valid cards of a single suit.
